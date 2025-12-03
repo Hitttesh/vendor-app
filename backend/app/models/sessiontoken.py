@@ -1,3 +1,4 @@
+# backend/app/models/sessiontoken.py
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from app.db import Base

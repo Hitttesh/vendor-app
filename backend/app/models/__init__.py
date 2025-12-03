@@ -1,3 +1,4 @@
+# backend/app/models/__init__.py
 # Re-export model classes so `from app.models import User` keeps working exactly as before.
 from .user import User
 from .vendor import Vendor

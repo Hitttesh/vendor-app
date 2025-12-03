@@ -1,4 +1,3 @@
-
 # backend/app/routers/user_router.py
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session

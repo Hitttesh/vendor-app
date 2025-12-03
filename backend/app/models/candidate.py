@@ -1,3 +1,4 @@
+# backend/app/models/candidate.py
 import uuid
 from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.sql import func

@@ -1,3 +1,4 @@
+# backend/app/models/assessment.py
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Text, TIMESTAMP, Integer, ForeignKey

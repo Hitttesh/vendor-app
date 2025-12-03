@@ -1,3 +1,4 @@
+# backend/app/models/assessment_candidate.py
 import uuid
 from sqlalchemy import Column, Float, String, TIMESTAMP, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
