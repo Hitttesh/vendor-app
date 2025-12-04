@@ -1,10 +1,13 @@
 #vendor/backend/app/routers/auth_router.py
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
-from .. import schemas, crud, db, auth
+from .. import schemas, db
 from datetime import timedelta
 from fastapi import Request
 from pydantic import BaseModel
+from app import repository as crud
+from app import services as auth
+from app.services import decode_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 # router = APIRouter(prefix="/vendor", tags=["vendor"])

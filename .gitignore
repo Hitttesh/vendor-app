@@ -9,6 +9,11 @@ backend/service-account.json
 backend/service-account.json.json
 backend/instance/
 
+# Python cache
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+
 # Frontend
 frontend/node_modules/
 frontend/.env

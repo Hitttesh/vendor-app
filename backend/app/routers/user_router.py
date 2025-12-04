@@ -1,8 +1,10 @@
 # backend/app/routers/user_router.py
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
-from .. import db, auth, crud, schemas, models
-from ..auth import decode_token
+from .. import db,  schemas, models
+from app.services import decode_token
+from app import repository as crud
+from app import services as auth
 
 router = APIRouter(prefix="/user", tags=["user"])
 
