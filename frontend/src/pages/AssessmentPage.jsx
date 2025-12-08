@@ -20,24 +20,26 @@ export default function AssessmentPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState(null);
-  const [backHover, setBackHover] = useState(false);
 
   const candidatesRef = useRef(null);
 
   // -------------------- fetch data --------------------
-  useEffect(() => {
-    (async () => {
-      await fetchVendor();
-      await fetchAssessment();
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+    const load = async () => {
+      try {
+        await Promise.all([fetchVendor(), fetchAssessment()]);
+      } catch (err) {
+        console.error("Initial load failed", err);
+      }
+    };
+
+    load();
   }, [id]);
 
   async function fetchVendor() {
     try {
-      const res = await getVendorDashboard();
-      const body = res?.body ?? res?.data ?? res;
-      setVendor(body?.vendor ?? body ?? null);
+      const body = await getVendorDashboard(); // already unwrapped in api.js
+      setVendor(body.vendor || null);
     } catch (err) {
       console.warn("Failed to load vendor", err);
     }
@@ -48,12 +50,14 @@ export default function AssessmentPage() {
     setError(null);
 
     try {
-      const res = await getAssessment(id);
-      const body = res?.body ?? res?.data ?? res;
-      const a = body?.assessment ?? body;
-      const c = a?.candidates ?? body?.candidates ?? [];
+      const body = await getAssessment(id); // { assessment, candidates }
 
-      setAssessment(a ?? null);
+      const a = body.assessment;
+      const c = body.candidates || [];
+
+      console.log("Assessment response --->", a);
+
+      setAssessment(a || null);
       setCandidates(Array.isArray(c) ? c : []);
     } catch (err) {
       console.error("Failed to load assessment", err);
@@ -62,6 +66,7 @@ export default function AssessmentPage() {
       setLoading(false);
     }
   }
+
 
   // -------------------- handlers --------------------
   function onAddedCandidate(candidate, updatedList) {
@@ -74,55 +79,14 @@ export default function AssessmentPage() {
     setShowAdd(false);
   }
 
-  function scrollToLowerAddButton() {
-    setTimeout(() => {
-      try {
-        const container = candidatesRef.current;
-        if (!container) return;
-
-        const btns = Array.from(container.querySelectorAll("button"));
-        const match = btns.find((b) =>
-          (b.textContent || "")
-            .trim()
-            .toLowerCase()
-            .includes("add candidate")
-        );
-
-        if (match) {
-          match.scrollIntoView({ behavior: "smooth", block: "center" });
-          try {
-            match.focus({ preventScroll: true });
-          } catch (_) {}
-          return;
-        }
-
-        const alt = container.querySelector(
-          '[data-role="add-candidate"], .add-candidate-btn, #add-candidate'
-        );
-
-        if (alt) {
-          alt.scrollIntoView({ behavior: "smooth", block: "center" });
-          try {
-            alt.focus({ preventScroll: true });
-          } catch (_) {}
-          return;
-        }
-
-        container.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      } catch (err) {
-        console.error("scrollToLowerAddButton error:", err);
-        candidatesRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }, 50);
+  function scrollToCandidatesSection() {
+    candidatesRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
   }
 
-  function openAddInlineAndScroll() {
+  function openAddCandidate() {
     setShowAdd(true);
     setTimeout(() => {
       candidatesRef.current?.scrollIntoView({
@@ -132,32 +96,21 @@ export default function AssessmentPage() {
     }, 60);
   }
 
-  // -------------------- computed --------------------
-  const skills =
-    assessment?.skills ||
-    assessment?.skill_tags ||
-    assessment?.skills_text ||
-    "";
+  // -------------------- computed fields --------------------
+  const skills = assessment?.skills || "";
 
-  const experience =
-    assessment?.experience ||
-    assessment?.work_experience ||
-    assessment?.min_experience ||
-    "";
+  const experience = assessment?.work_experience || "";
 
   const requiredCandidates =
-    assessment?.required_candidates ??
-    assessment?.required ??
-    assessment?.positions ??
-    assessment?.num_positions ??
-    assessment?.required_count ??
-    null;
+    typeof assessment?.required_candidates === "number"
+      ? assessment.required_candidates
+      : null;
 
   const preparedDescription = useMemo(() => {
-    let d = assessment?.description ?? "";
-    if (!d) return "";
+    const raw = assessment?.description ?? "";
+    if (!raw) return "";
 
-    d = d.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    let d = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
     const hasExplicitList =
       /^[\s]*[-*+•]\s+/m.test(d) || /^\s*\d+\.\s+/m.test(d);
@@ -175,10 +128,6 @@ export default function AssessmentPage() {
       <Header
         companyName={vendor?.company_name}
         email={vendor?.email}
-        onNavigate={(tab) => {
-          if (tab === "Candidates") navigate("/vendor/candidates");
-          if (tab === "Assessments") navigate("/vendor/dashboard");
-        }}
         onSettings={() => navigate("/vendor/settings")}
       />
 
@@ -191,14 +140,8 @@ export default function AssessmentPage() {
               <div className="flex items-center justify-center h-full w-12">
                 <button
                   onClick={() => navigate("/vendor/dashboard")}
-                  onMouseEnter={() => setBackHover(true)}
-                  onMouseLeave={() => setBackHover(false)}
                   aria-label="Back to assessments"
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
-                    backHover
-                      ? "bg-blue-50 border border-blue-200"
-                      : "bg-gray-50 border border-gray-100"
-                  }`}
+                  className="w-10 h-10 flex items-center justify-center rounded-full transition-all bg-gray-50 border border-gray-100 hover:bg-blue-50 hover:border-blue-200"
                 >
                   <FiArrowLeft size={18} className="text-blue-600" />
                 </button>
@@ -213,7 +156,7 @@ export default function AssessmentPage() {
                 <div className="mt-0 text-sm text-gray-600 flex items-center gap-3">
                   <span className="text-gray-500">Experience:</span>
                   <span className="text-gray-800">
-                    {String(experience) || "-"}
+                    {experience || "-"}
                   </span>
 
                   <span className="text-gray-300">|</span>
@@ -231,9 +174,9 @@ export default function AssessmentPage() {
               </div>
             </div>
 
-            {/* Top Add Candidate (scroll only) */}
+            {/* Top Add Candidate */}
             <button
-              onClick={scrollToLowerAddButton}
+              onClick={scrollToCandidatesSection}
               className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-blue-600 text-white font-semibold shadow-sm hover:bg-blue-700 active:bg-blue-800 transition"
             >
               Add Candidate
@@ -249,56 +192,62 @@ export default function AssessmentPage() {
               Skills:
             </strong>
             <span className="text-gray-700 text-[16px] leading-relaxed">
-              {Array.isArray(skills) ? skills.join(", ") : skills}
+              {Array.isArray(skills) ? skills.join(", ") : skills || "-"}
             </span>
           </div>
 
           {/* Job Description */}
           <div>
-          <strong className="text-gray-900 text-[16px] font-semibold">
-            Job Description:
-          </strong>
-        </div>
+            <strong className="text-gray-900 text-[16px] font-semibold">
+              Job Description:
+            </strong>
+          </div>
 
-        {/* Description Body */}
-        <div className="text-gray-700 text-[16px] leading-[1.7]">
-          {preparedDescription ? (
-            <div className="prose prose-slate max-w-none text-[16px] leading-[1.7]">
-              <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            h1: ({ children }) => <h1 className="text-2xl font-bold text-gray-600">{children}</h1>,
-            h2: ({ children }) => <h2 className="text-xl font-semibold text-gray-600">{children}</h2>,
-            h3: ({ children }) => <h3 className="text-lg font-medium text-gray-600">{children}</h3>,
-            strong: ({ children }) => <span className="font-semibold text-gray-600">{children}</span>,
-          }}
-        >
-          {preparedDescription}
-        </ReactMarkdown>
-            </div>
-          ) : (
-            <div className="text-gray-500">No description provided.</div>
-          )}
-        </div>
+          {/* Description Body */}
+          <div className="text-gray-700 text-[16px] leading-[1.7]">
+            {preparedDescription ? (
+              <div className="prose prose-slate max-w-none text-[16px] leading-[1.7]">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => (
+                      <h1 className="text-2xl font-bold text-gray-600">
+                        {children}
+                      </h1>
+                    ),
+                    h2: ({ children }) => (
+                      <h2 className="text-xl font-semibold text-gray-600">
+                        {children}
+                      </h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="text-lg font-medium text-gray-600">
+                        {children}
+                      </h3>
+                    ),
+                    strong: ({ children }) => (
+                      <span className="font-semibold text-gray-600">
+                        {children}
+                      </span>
+                    ),
+                  }}
+                >
+                  {preparedDescription}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <div className="text-gray-500">No description provided.</div>
+            )}
+          </div>
         </div>
 
         {/* ---------- CANDIDATES SECTION ---------- */}
         <section ref={candidatesRef} className="mt-8">
           <CandidateList
             candidates={candidates}
-            requiredCount={
-              assessment?.required_candidates ??
-              assessment?.requiredCandidates
-            }
-            onAdd={() => {
-              setShowAdd(true);
-              setTimeout(() => {
-                candidatesRef.current?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "center",
-                });
-              }, 60);
-            }}
+            requiredCount={requiredCandidates}
+            assessmentId={assessment?.assessment_id} 
+            onAdd={openAddCandidate}
             onRefresh={fetchAssessment}
           />
 
@@ -306,7 +255,7 @@ export default function AssessmentPage() {
             <div className="mt-4">
               <AddCandidateInline
                 assessment={{
-                  id: assessment?.assessment_id ?? assessment?.id,
+                  id: assessment?.assessment_id,
                   title: assessment?.title,
                 }}
                 onClose={() => setShowAdd(false)}

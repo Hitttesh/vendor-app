@@ -21,9 +21,6 @@ class Assessment(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     user_id = Column(String(10), nullable=True)
 
-    # NOTE: removed job_role and job_description from model mapping
-    # If you later add these columns to DB, re-add them here.
-
     # NEW: skills column (comma-separated or free text)
     skills = Column(Text, nullable=True)
 

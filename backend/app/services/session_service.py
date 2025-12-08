@@ -1,3 +1,4 @@
+# backend/app/services/session_service.py
 from sqlalchemy.orm import Session
 from .. import models  # app.models
 

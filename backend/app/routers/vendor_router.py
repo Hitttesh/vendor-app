@@ -104,7 +104,7 @@ def vendor_dashboard(
             "description": a.description,
             "skills": a.skills,
             "duration": a.duration,
-            "experience": a.work_experience,
+            "work_experience": a.work_experience,
             "vendor_id": a.vendor_id,
             "status": a.status,
             "required_candidates": int(a.required_candidates or 0),
@@ -346,7 +346,7 @@ def get_assessment(
             "description": assessment.description,
             "skills": assessment.skills,
             "duration": assessment.duration,
-            "experience": assessment.work_experience,
+            "work_experience": assessment.work_experience,
             "vendor_id": assessment.vendor_id,
             "required_candidates": assessment.required_candidates,
             "candidates_count": len(candidates)
@@ -417,30 +417,37 @@ def change_password(
     Change authenticated vendor password securely.
     """
 
-    from .. import auth as _auth
+    # ✅ use the already imported auth services module
+    _auth = auth
 
     vendor = current_vendor
 
-    # Find password verification function
+    # Find password verification function on app.services
     verify_fn = next(
         (getattr(_auth, fn) for fn in ["verify_password", "check_password", "verify_pw"] if hasattr(_auth, fn)),
         None
     )
 
     if not verify_fn:
-        raise HTTPException(status_code=500, detail="Password verification function missing in auth module")
+        raise HTTPException(
+            status_code=500,
+            detail="Password verification function missing in auth/services module",
+        )
 
     if not verify_fn(payload.old_password, vendor.password_hash):
         raise HTTPException(status_code=400, detail="Current password incorrect")
 
-    # Find password hashing function
+    # Find password hashing function on app.services
     hash_fn = next(
         (getattr(_auth, fn) for fn in ["hash_password", "get_password_hash", "generate_password_hash", "create_password_hash"] if hasattr(_auth, fn)),
         None
     )
 
     if not hash_fn:
-        raise HTTPException(status_code=500, detail="Password hashing function missing in auth module")
+        raise HTTPException(
+            status_code=500,
+            detail="Password hashing function missing in auth/services module",
+        )
 
     vendor.password_hash = hash_fn(payload.new_password)
     database.add(vendor)

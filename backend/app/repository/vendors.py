@@ -1,3 +1,4 @@
+# backend/app/repository/vendors.py
 from sqlalchemy.orm import Session
 from .. import models
 from app import services as auth
@@ -16,5 +17,3 @@ def authenticate_vendor(db: Session, email: str, password: str):
         return vendor
     return None
 
-def list_assessments_for_vendor(db: Session, vendor_id: int):
-    return db.query(models.Assessment).filter(models.Assessment.vendor_id == vendor_id).all()

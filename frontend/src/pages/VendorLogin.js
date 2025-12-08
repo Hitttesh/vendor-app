@@ -1,25 +1,39 @@
 // frontend/src/pages/VendorLogin.js
 import React, { useState } from "react";
-import { vendorLogin } from "../api/api";
 import { useNavigate } from "react-router-dom";
+import { vendorLogin } from "../api/api";
 
 export default function VendorLogin() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function onSubmit(e) {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
-      const data = await vendorLogin(email, password);
-      if (data?.vendor) {
+      const data = await vendorLogin(email.trim(), password);
+
+      // expect backend to return { vendor: {...}, ... }
+      if (data && data.vendor) {
         navigate("/vendor/dashboard");
       } else {
-        alert("Login failed: " + (data?.detail || "Unknown error"));
+        const msg =
+          data?.detail ||
+          data?.message ||
+          "Invalid email or password. Please try again.";
+        setError(msg);
       }
     } catch (err) {
-      console.error(err);
-      alert("Login error, check console");
+      console.error("Login error:", err);
+      setError(err.message || "Login error, please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -31,8 +45,14 @@ export default function VendorLogin() {
           className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl px-6 py-8 md:px-8 md:py-9"
         >
           <h1 className="text-2xl md:text-3xl font-semibold text-[#071029] mb-6 text-center">
-             Sign In
+            Sign In
           </h1>
+
+          {error && (
+            <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              {error}
+            </div>
+          )}
 
           {/* Email */}
           <div className="mb-4">
@@ -61,11 +81,13 @@ export default function VendorLogin() {
           {/* Button */}
           <button
             type="submit"
-            className="w-full px-6 py-3 rounded-lg font-semibold text-white text-lg
-            bg-gradient-to-r from-[#2b7aff] to-[#1e5bff] shadow-lg
-            transform transition-transform duration-200 hover:-translate-y-1"
+            disabled={loading}
+            className={`w-full px-6 py-3 rounded-lg font-semibold text-white text-lg
+              bg-gradient-to-r from-[#2b7aff] to-[#1e5bff] shadow-lg
+              transform transition-transform duration-200 hover:-translate-y-1
+              ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
           >
-            Sign In
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>

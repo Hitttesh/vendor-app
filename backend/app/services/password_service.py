@@ -1,3 +1,4 @@
+# backend/app/services/password_service.py
 from passlib.context import CryptContext
 
 # Use pbkdf2_sha256 (no bcrypt dependency) — good for dev and secure

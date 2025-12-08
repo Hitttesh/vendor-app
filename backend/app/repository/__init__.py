@@ -9,7 +9,7 @@ from .users import (
 from .vendors import (
     create_vendor,
     authenticate_vendor,
-    list_assessments_for_vendor,
+    
 )
 from .candidates import (
     create_candidate,
